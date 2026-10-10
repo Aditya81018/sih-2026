@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TOTAL_COST_FORMATTED } from "./cost-list/data";
+import { TOTAL_FACTORY_COST_FORMATTED } from "./cost-list/data";
 
 export default function Home() {
   return (
@@ -10,14 +10,11 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <span className="font-bold text-gray-900 text-sm">SIH 2026</span>
             <span className="text-gray-300">/</span>
-            <span className="text-sm text-gray-600">Warehouse Robotics Platform</span>
+            <span className="text-sm text-gray-600">Orbit V1 AGV &amp; Telescopic Mast Platform</span>
           </div>
           <nav className="flex items-center gap-4 text-xs font-medium text-gray-600">
             <Link href="/cost-list" className="hover:text-gray-900">
               Cost List
-            </Link>
-            <Link href="/api/cost-list" className="hover:text-gray-900">
-              API
             </Link>
           </nav>
         </div>
@@ -31,10 +28,10 @@ export default function Home() {
             Smart India Hackathon 2026
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-            Telescopic Mast &amp; Robotic Arm Subsystem
+            Orbit V1 AGV &amp; Telescopic Mast System
           </h1>
           <p className="text-sm sm:text-base text-gray-600 max-w-3xl leading-relaxed">
-            Technical documentation, component specifications, and complete Bill of Materials (BOM) cost breakdown for the automated guided vehicle mast assembly.
+            Technical documentation, component specifications, and comprehensive Bill of Materials (BOM) cost breakdown covering the AGV mobile base, telescopic mast assembly, additive/subtractive manufacturing, and assembly labor.
           </p>
         </div>
 
@@ -47,55 +44,52 @@ export default function Home() {
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-mono font-semibold text-gray-600">/cost-list</span>
-              <span className="text-xs font-mono font-bold text-gray-900">{TOTAL_COST_FORMATTED}</span>
+              <span className="text-xs font-mono font-bold text-gray-900">{TOTAL_FACTORY_COST_FORMATTED} Total</span>
             </div>
             <h2 className="text-lg font-bold text-gray-900 mb-1">
-              Detailed Cost List &amp; BOM →
+              Detailed Cost Breakdown &amp; BOM →
             </h2>
             <p className="text-xs text-gray-600 leading-relaxed mb-3">
-              View the itemized component pricing table across telescopic mast hardware, horizontal expansion slides, BLDC frameless joint servos, and closed-loop steppers.
+              Full 19-item BOM across AGV mobile base (₹1,14,550), telescopic mast attachment (₹1,35,700), and system assembly &amp; calibration (₹33,000).
             </p>
             <span className="text-xs font-medium text-gray-900 underline">
-              Open cost list table
+              Open cost breakdown table
             </span>
           </Link>
 
-          {/* Card 2: API */}
-          <Link
-            href="/api/cost-list"
-            className="block p-5 border border-gray-200 rounded hover:border-gray-400 bg-white transition"
-          >
+          {/* Card 2: Technical Specifications */}
+          <div className="p-5 border border-gray-200 rounded bg-white">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono font-semibold text-gray-600">/api/cost-list</span>
-              <span className="text-xs text-gray-500">JSON &amp; CSV</span>
+              <span className="text-xs font-mono font-semibold text-gray-600">HARDWARE SPECS</span>
+              <span className="text-xs text-gray-500">10ft Stroke</span>
             </div>
             <h2 className="text-lg font-bold text-gray-900 mb-1">
-              Data API Endpoint →
+              Hardware &amp; Fabrication
             </h2>
             <p className="text-xs text-gray-600 leading-relaxed mb-3">
-              REST endpoint returning raw JSON and CSV format for software integration, procurement pipelines, and automated reporting.
+              Large Format 3D Printed Composite Chassis (PETG-CF / ABS-CF) paired with 6061-T6 CNC aluminum mast channels and high-flex cable drag chains.
             </p>
-            <span className="text-xs font-medium text-gray-900 underline">
-              View JSON response
+            <span className="text-xs text-gray-500">
+              Warehouse rack reach &amp; pallet transport
             </span>
-          </Link>
+          </div>
         </div>
 
-        {/* Subsystem Specifications Summary */}
+        {/* System Subsystems Summary */}
         <div className="border border-gray-200 rounded p-5 bg-gray-50 text-xs">
-          <h3 className="font-semibold text-gray-900 mb-2">Subsystem Overview</h3>
+          <h3 className="font-semibold text-gray-900 mb-2">System Architecture Summary</h3>
           <ul className="list-disc list-inside text-gray-700 space-y-1">
-            <li><strong>Primary Mast:</strong> 10ft 9-layer aluminum telescopic mast with NEMA 34 closed-loop stepper drive</li>
-            <li><strong>Secondary Arm:</strong> 3ft horizontal expansion slide channel with NEMA 23 stepper</li>
-            <li><strong>Robotic Joints:</strong> MyActuator RMD series BLDC servos (X8-120 arm pitch, X6-60 wrist pitch, X4-36 wrist roll)</li>
-            <li><strong>Controller &amp; Vision:</strong> STM32F407 controller board with industrial Hikrobot camera</li>
+            <li><strong>AGV Mobile Base (Direct Cost ₹1,14,550):</strong> 24V 250W BLDC servo wheel drives, LiFePO4 battery with BMS, Raspberry Pi 4 + STM32 compute, Hikrobot downward QR camera, and LFAM composite 3D printed chassis.</li>
+            <li><strong>Telescopic Mast &amp; Hand (Direct Cost ₹1,35,700):</strong> 10ft 9-layer CNC aluminum mast, NEMA closed-loop steppers, MyActuator RMD series BLDC joint servos, gripper mechanism, and Hikrobot hand camera.</li>
+            <li><strong>Assembly &amp; Quality Control (₹33,000):</strong> Mechanical system integration, wiring harness termination, and ROS2/VDA5050 firmware calibration.</li>
+            <li><strong>Total Factory Production Cost:</strong> <strong>₹2,83,250</strong></li>
           </ul>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-500">
-        Smart India Hackathon 2026 • Automated Warehouse Guided Vehicle &amp; Mast Subsystem
+        Smart India Hackathon 2026 • Orbit V1 AGV &amp; Telescopic Mast System Documentation
       </footer>
     </div>
   );

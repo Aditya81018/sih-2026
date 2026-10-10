@@ -4,16 +4,17 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   COST_ITEMS,
-  TOTAL_COST,
-  TOTAL_COST_FORMATTED,
-  CATEGORY_SUMMARIES,
+  TOTAL_FACTORY_COST,
+  TOTAL_FACTORY_COST_FORMATTED,
+  PRICING_MODEL,
+  MODULE_SUMMARIES,
   RAW_CSV,
   CostItem,
 } from "./data";
 
 export default function CostListClient() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedModule, setSelectedModule] = useState<string>("All");
   const [sortBy, setSortBy] = useState<"default" | "cost-desc" | "cost-asc" | "name">("default");
   const [copiedCSV, setCopiedCSV] = useState(false);
   const [showRawCsv, setShowRawCsv] = useState(false);
@@ -22,33 +23,33 @@ export default function CostListClient() {
   const filteredItems = useMemo(() => {
     let result = [...COST_ITEMS];
 
-    if (selectedCategory !== "All") {
-      result = result.filter((item) => item.category === selectedCategory);
+    if (selectedModule !== "All") {
+      result = result.filter((item) => item.systemModule === selectedModule);
     }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(
         (item) =>
-          item.subsystemAxis.toLowerCase().includes(q) ||
-          item.componentModel.toLowerCase().includes(q) ||
-          item.category.toLowerCase().includes(q)
+          item.systemModule.toLowerCase().includes(q) ||
+          item.itemDescription.toLowerCase().includes(q) ||
+          (item.specification && item.specification.toLowerCase().includes(q))
       );
     }
 
     if (sortBy === "cost-desc") {
-      result.sort((a, b) => b.totalCost - a.totalCost);
+      result.sort((a, b) => b.subtotal - a.subtotal);
     } else if (sortBy === "cost-asc") {
-      result.sort((a, b) => a.totalCost - b.totalCost);
+      result.sort((a, b) => a.subtotal - b.subtotal);
     } else if (sortBy === "name") {
-      result.sort((a, b) => a.subsystemAxis.localeCompare(b.subsystemAxis));
+      result.sort((a, b) => a.itemDescription.localeCompare(b.itemDescription));
     }
 
     return result;
-  }, [searchQuery, selectedCategory, sortBy]);
+  }, [searchQuery, selectedModule, sortBy]);
 
   const currentFilteredTotal = useMemo(() => {
-    return filteredItems.reduce((acc, item) => acc + item.totalCost, 0);
+    return filteredItems.reduce((acc, item) => acc + item.subtotal, 0);
   }, [filteredItems]);
 
   const handleCopyCSV = () => {
@@ -62,7 +63,7 @@ export default function CostListClient() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "mast_subsystem_cost_list.csv");
+    link.setAttribute("download", "orbit_v1_detailed_cost_and_pricing_model.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -116,42 +117,44 @@ export default function CostListClient() {
         {/* Page Title & Metadata */}
         <div className="mb-6 pb-6 border-b border-gray-200">
           <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
-            Endpoint: /cost-list
+            Orbit V1 AGV + Telescopic Mast Subsystem
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Mast Subsystem Detailed Cost List
+            Detailed Cost Breakdown
           </h1>
           <p className="text-sm text-gray-600 max-w-3xl">
-            Detailed Bill of Materials (BOM) specification and component cost estimation for the primary telescopic mast, horizontal expansion arm, BLDC servo joints, stepper motors, controller, and vision sensor.
+            Complete financial breakdown covering component Bill of Materials (BOM), custom LFAM composite 3D printed chassis, CNC aluminum mast fabrication, assembly labor, and ROS2 software calibration.
           </p>
         </div>
 
         {/* Flat Summary KPI Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="border border-gray-200 rounded p-4 bg-gray-50">
-            <div className="text-xs font-medium text-gray-500 uppercase">Subsystem Total</div>
-            <div className="text-2xl font-bold text-gray-900 mt-1">{TOTAL_COST_FORMATTED}</div>
-            <div className="text-xs text-gray-500 mt-0.5">11 Line Items</div>
+            <div className="text-xs font-medium text-gray-500 uppercase">Factory Production Cost</div>
+            <div className="text-2xl font-bold text-gray-900 mt-1">{TOTAL_FACTORY_COST_FORMATTED}</div>
+            <div className="text-xs text-gray-500 mt-0.5">19 Total Line Items</div>
           </div>
 
           <div className="border border-gray-200 rounded p-4 bg-gray-50">
-            <div className="text-xs font-medium text-gray-500 uppercase">BLDC Servos</div>
-            <div className="text-2xl font-bold text-gray-900 mt-1">₹55,000</div>
-            <div className="text-xs text-gray-500 mt-0.5">38.3% of total</div>
+            <div className="text-xs font-medium text-gray-500 uppercase">AGV Direct Cost</div>
+            <div className="text-2xl font-bold text-gray-900 mt-1">{PRICING_MODEL.agvDirectCostFormatted}</div>
+            <div className="text-xs text-gray-500 mt-0.5">Base (₹77,050) + Chassis (₹37,500)</div>
           </div>
 
           <div className="border border-gray-200 rounded p-4 bg-gray-50">
-            <div className="text-xs font-medium text-gray-500 uppercase">Structure & Slides</div>
-            <div className="text-2xl font-bold text-gray-900 mt-1">₹45,500</div>
-            <div className="text-xs text-gray-500 mt-0.5">31.7% of total</div>
+            <div className="text-xs font-medium text-gray-500 uppercase">Mast Direct Cost</div>
+            <div className="text-2xl font-bold text-gray-900 mt-1">{PRICING_MODEL.mastDirectCostFormatted}</div>
+            <div className="text-xs text-gray-500 mt-0.5">Actuators (₹98,200) + CNC (₹37,500)</div>
           </div>
 
           <div className="border border-gray-200 rounded p-4 bg-gray-50">
-            <div className="text-xs font-medium text-gray-500 uppercase">Actuation & Vision</div>
-            <div className="text-2xl font-bold text-gray-900 mt-1">₹43,200</div>
-            <div className="text-xs text-gray-500 mt-0.5">30.0% of total</div>
+            <div className="text-xs font-medium text-gray-500 uppercase">Assembly &amp; Testing</div>
+            <div className="text-2xl font-bold text-gray-900 mt-1">{PRICING_MODEL.assemblyTestingCostFormatted}</div>
+            <div className="text-xs text-gray-500 mt-0.5">Labor (₹18,000) + ROS2 (₹15,000)</div>
           </div>
         </div>
+
+
 
         {/* Raw CSV Box (collapsible) */}
         {showRawCsv && (
@@ -173,29 +176,29 @@ export default function CostListClient() {
 
         {/* Filter & Search Bar */}
         <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Category Filter Buttons */}
+          {/* Module Filter Buttons */}
           <div className="flex flex-wrap items-center gap-1">
             <button
-              onClick={() => setSelectedCategory("All")}
+              onClick={() => setSelectedModule("All")}
               className={`px-3 py-1.5 text-xs font-medium rounded border ${
-                selectedCategory === "All"
+                selectedModule === "All"
                   ? "bg-gray-900 text-white border-gray-900"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
               }`}
             >
               All ({COST_ITEMS.length})
             </button>
-            {CATEGORY_SUMMARIES.map((cat) => (
+            {MODULE_SUMMARIES.map((mod) => (
               <button
-                key={cat.category}
-                onClick={() => setSelectedCategory(cat.category)}
+                key={mod.module}
+                onClick={() => setSelectedModule(mod.module)}
                 className={`px-3 py-1.5 text-xs font-medium rounded border ${
-                  selectedCategory === cat.category
+                  selectedModule === mod.module
                     ? "bg-gray-900 text-white border-gray-900"
                     : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                 }`}
               >
-                {cat.category} ({cat.count})
+                {mod.module} ({mod.count})
               </button>
             ))}
           </div>
@@ -205,7 +208,7 @@ export default function CostListClient() {
             <input
               id="search-input"
               type="text"
-              placeholder="Search component or axis..."
+              placeholder="Search component or module..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-500 w-full sm:w-56"
@@ -219,22 +222,22 @@ export default function CostListClient() {
               <option value="default">Default Order</option>
               <option value="cost-desc">Cost: High to Low</option>
               <option value="cost-asc">Cost: Low to High</option>
-              <option value="name">Axis Name (A-Z)</option>
+              <option value="name">Item Name (A-Z)</option>
             </select>
           </div>
         </div>
 
-        {/* Clean, Plain, Flat Table */}
+        {/* Flat Structured Cost Table */}
         <div className="border border-gray-300 rounded overflow-hidden mb-8">
           <div className="overflow-x-auto">
             <table id="cost-list-table" className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-300 text-xs font-semibold text-gray-700">
-                  <th scope="col" className="py-3 px-4">Subsystem / Axis</th>
-                  <th scope="col" className="py-3 px-4">Component Model / Specification</th>
+                  <th scope="col" className="py-3 px-4">System Module</th>
+                  <th scope="col" className="py-3 px-4">Item Description</th>
                   <th scope="col" className="py-3 px-4 text-center">Qty</th>
-                  <th scope="col" className="py-3 px-4 text-right">Est. Unit Cost (INR)</th>
-                  <th scope="col" className="py-3 px-4 text-right">Total Cost (INR)</th>
+                  <th scope="col" className="py-3 px-4 text-right">Unit Cost (INR)</th>
+                  <th scope="col" className="py-3 px-4 text-right">Subtotal (INR)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 text-xs text-gray-800">
@@ -247,14 +250,17 @@ export default function CostListClient() {
                 ) : (
                   filteredItems.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/80">
-                      <td className="py-3 px-4 font-medium text-gray-900 align-top">
-                        <div>{item.subsystemAxis}</div>
+                      <td className="py-3 px-4 font-medium text-gray-900 align-top whitespace-nowrap">
+                        <div>{item.systemModule}</div>
                         <span className="inline-block mt-0.5 text-[11px] text-gray-500">
                           {item.category}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-gray-700 align-top">
-                        {item.componentModel}
+                        <div className="font-medium text-gray-900">{item.itemDescription}</div>
+                        {item.specification && (
+                          <div className="text-[11px] text-gray-500 mt-0.5">{item.specification}</div>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center text-gray-900 font-mono align-top">
                         {item.qty}
@@ -263,7 +269,7 @@ export default function CostListClient() {
                         {item.unitCostFormatted}
                       </td>
                       <td className="py-3 px-4 text-right font-mono font-semibold text-gray-900 align-top">
-                        {item.totalCostFormatted}
+                        {item.subtotalFormatted}
                       </td>
                     </tr>
                   ))
@@ -272,8 +278,8 @@ export default function CostListClient() {
               <tfoot>
                 <tr className="border-t-2 border-gray-900 bg-gray-50 text-xs font-bold text-gray-900">
                   <td colSpan={2} className="py-3.5 px-4">
-                    {selectedCategory === "All" && !searchQuery
-                      ? "MAST SUBSYSTEM TOTAL"
+                    {selectedModule === "All" && !searchQuery
+                      ? "TOTAL FACTORY PRODUCTION COST"
                       : `SUBTOTAL (${filteredItems.length} ITEMS)`}
                   </td>
                   <td className="py-3.5 px-4 text-center font-mono">
@@ -283,8 +289,8 @@ export default function CostListClient() {
                     Total
                   </td>
                   <td className="py-3.5 px-4 text-right font-mono text-sm">
-                    {selectedCategory === "All" && !searchQuery
-                      ? TOTAL_COST_FORMATTED
+                    {selectedModule === "All" && !searchQuery
+                      ? TOTAL_FACTORY_COST_FORMATTED
                       : `₹${currentFilteredTotal.toLocaleString("en-IN")}`}
                   </td>
                 </tr>
@@ -293,26 +299,12 @@ export default function CostListClient() {
           </div>
         </div>
 
-        {/* API Reference Box */}
-        <div className="border border-gray-200 rounded p-4 bg-gray-50 text-xs">
-          <div className="font-semibold text-gray-800 mb-1">API Endpoints</div>
-          <div className="text-gray-600 mb-2">
-            The data is also accessible directly via GET requests:
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
-            <div className="p-2 border border-gray-300 rounded bg-white text-gray-800">
-              <span className="text-gray-500">JSON: </span>GET /api/cost-list
-            </div>
-            <div className="p-2 border border-gray-300 rounded bg-white text-gray-800">
-              <span className="text-gray-500">CSV: </span>GET /api/cost-list?format=csv
-            </div>
-          </div>
-        </div>
+
       </main>
 
       {/* Footer */}
       <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-500">
-        Smart India Hackathon 2026 • Mast Subsystem Documentation
+        Smart India Hackathon 2026 • Orbit V1 AGV &amp; Telescopic Mast System Documentation
       </footer>
     </div>
   );

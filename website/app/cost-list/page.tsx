@@ -2,18 +2,17 @@ import type { Metadata } from "next";
 import CostListClient from "./CostListClient";
 
 export const metadata: Metadata = {
-  title: "Mast Subsystem Cost List | SIH 2026",
+  title: "Orbit V1 Cost Breakdown | SIH 2026",
   description:
-    "Detailed Bill of Materials (BOM) and cost breakdown for the 10ft 9-Layer Mast, Secondary Hand Arm, Stepper Actuation, BLDC Frameless Servos, and Vision Subsystem.",
+    "Comprehensive Bill of Materials (BOM) and manufacturing cost breakdown for the Orbit V1 AGV Mobile Base and Telescopic Mast System.",
   keywords: [
     "SIH 2026",
-    "Mast Subsystem",
-    "Cost List",
-    "BOM",
+    "Orbit V1",
+    "AGV Cost List",
     "Telescopic Mast",
-    "MyActuator BLDC",
-    "Robotic Arm",
-    "Smart India Hackathon",
+    "LFAM 3D Printing",
+    "Commercial Pricing Model",
+    "BOM",
   ],
 };
 

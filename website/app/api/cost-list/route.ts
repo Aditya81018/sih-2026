@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { COST_ITEMS, TOTAL_COST, TOTAL_COST_FORMATTED, RAW_CSV, CATEGORY_SUMMARIES } from "@/app/cost-list/data";
+import {
+  COST_ITEMS,
+  TOTAL_FACTORY_COST,
+  TOTAL_FACTORY_COST_FORMATTED,
+  PRICING_MODEL,
+  MODULE_SUMMARIES,
+  RAW_CSV,
+} from "@/app/cost-list/data";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const format = searchParams.get("format")?.toLowerCase();
-  const category = searchParams.get("category");
+  const moduleParam = searchParams.get("module");
   const query = searchParams.get("search")?.toLowerCase();
 
   // If CSV format is requested
@@ -13,7 +20,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": 'inline; filename="mast_subsystem_cost_list.csv"',
+        "Content-Disposition": 'inline; filename="orbit_v1_cost_breakdown.csv"',
         "Cache-Control": "public, max-age=3600, s-maxage=3600",
       },
     });
@@ -22,36 +29,37 @@ export async function GET(request: NextRequest) {
   // Filter items if params provided
   let filteredItems = [...COST_ITEMS];
 
-  if (category) {
+  if (moduleParam) {
     filteredItems = filteredItems.filter(
-      (item) => item.category.toLowerCase() === category.toLowerCase()
+      (item) => item.systemModule.toLowerCase() === moduleParam.toLowerCase()
     );
   }
 
   if (query) {
     filteredItems = filteredItems.filter(
       (item) =>
-        item.subsystemAxis.toLowerCase().includes(query) ||
-        item.componentModel.toLowerCase().includes(query) ||
-        item.badge.toLowerCase().includes(query)
+        item.systemModule.toLowerCase().includes(query) ||
+        item.itemDescription.toLowerCase().includes(query) ||
+        (item.specification && item.specification.toLowerCase().includes(query))
     );
   }
 
-  const filteredTotal = filteredItems.reduce((acc, item) => acc + item.totalCost, 0);
+  const filteredTotal = filteredItems.reduce((acc, item) => acc + item.subtotal, 0);
 
   return NextResponse.json(
     {
       project: "Smart India Hackathon 2026",
-      subsystem: "Primary Mast & Telescopic Arm Subsystem",
+      system: "Orbit V1 AGV + Telescopic Mast System",
       currency: "INR",
       currencySymbol: "₹",
-      totalCost: TOTAL_COST,
-      totalCostFormatted: TOTAL_COST_FORMATTED,
+      totalFactoryCost: TOTAL_FACTORY_COST,
+      totalFactoryCostFormatted: TOTAL_FACTORY_COST_FORMATTED,
       totalItemsCount: COST_ITEMS.length,
       filteredCount: filteredItems.length,
       filteredTotalCost: filteredTotal,
       filteredTotalCostFormatted: `₹${filteredTotal.toLocaleString("en-IN")}`,
-      categorySummaries: CATEGORY_SUMMARIES,
+      pricingModel: PRICING_MODEL,
+      moduleSummaries: MODULE_SUMMARIES,
       items: filteredItems,
       rawCsv: RAW_CSV,
     },

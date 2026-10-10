@@ -1,212 +1,338 @@
 export interface CostItem {
   id: string;
-  subsystemAxis: string;
-  componentModel: string;
+  systemModule: "AGV Mobile Base" | "AGV Manufacturing" | "Telescopic Mast" | "Mast Manufacturing" | "Assembly & Overheads";
+  itemDescription: string;
+  specification?: string;
   qty: number;
   unitCost: number;
   unitCostFormatted: string;
-  totalCost: number;
-  totalCostFormatted: string;
-  category: "Structure & Mechanics" | "Stepper Actuation" | "BLDC Servos" | "Electronics & Vision";
-  badge: string;
-  notes?: string;
+  subtotal: number;
+  subtotalFormatted: string;
+  category: "AGV Base" | "Mast System" | "Manufacturing & Assembly";
 }
 
 export const COST_ITEMS: CostItem[] = [
+  // Subsystem 1: AGV Mobile Base Unit & Manufacturing
   {
-    id: "primary-mast-structure",
-    subsystemAxis: "Primary Mast Structure",
-    componentModel: "10ft 9-Layer Aluminum Telescopic Mast Hardware & Bearings",
-    qty: 1,
-    unitCost: 28000,
-    unitCostFormatted: "₹28,000",
-    totalCost: 28000,
-    totalCostFormatted: "₹28,000",
-    category: "Structure & Mechanics",
-    badge: "Structure",
-    notes: "Precision CNC milled 6061-T6 aluminum sections with low-friction linear bearings and safety stops."
+    id: "agv-wheel-motors",
+    systemModule: "AGV Mobile Base",
+    itemDescription: "24V 250W BLDC Servo Drive Wheel Modules (Pair)",
+    specification: "ZLLG45ASM200 4.5\" Hub Motors with integrated hall encoders",
+    qty: 2,
+    unitCost: 8700,
+    unitCostFormatted: "₹8,700",
+    subtotal: 17400,
+    subtotalFormatted: "₹17,400",
+    category: "AGV Base",
   },
   {
-    id: "secondary-hand-arm",
-    subsystemAxis: "Secondary Hand Arm",
-    componentModel: "3ft Horizontal Expansion Arm Aluminum Channel & Slides",
-    qty: 1,
-    unitCost: 12000,
-    unitCostFormatted: "₹12,000",
-    totalCost: 12000,
-    totalCostFormatted: "₹12,000",
-    category: "Structure & Mechanics",
-    badge: "Extension Arm",
-    notes: "3-foot stroke horizontal linear slide channel with dual linear rails for warehouse rack shelf reach."
-  },
-  {
-    id: "primary-mast-motor",
-    subsystemAxis: "Primary Mast Motor",
-    componentModel: "NEMA 34 Closed-Loop Stepper + 10:1 Planetary Gearbox",
-    qty: 1,
-    unitCost: 14500,
-    unitCostFormatted: "₹14,500",
-    totalCost: 14500,
-    totalCostFormatted: "₹14,500",
-    category: "Stepper Actuation",
-    badge: "Vertical Drive",
-    notes: "High torque 8.5 N·m closed loop stepper drive with 10:1 precision planetary reduction for vertical lifting."
-  },
-  {
-    id: "hand-expansion-motor",
-    subsystemAxis: "Hand Expansion Motor",
-    componentModel: "NEMA 23 Closed-Loop Stepper + 5:1 Planetary Gearbox",
-    qty: 1,
-    unitCost: 6200,
-    unitCostFormatted: "₹6,200",
-    totalCost: 6200,
-    totalCostFormatted: "₹6,200",
-    category: "Stepper Actuation",
-    badge: "Linear Drive",
-    notes: "Compact closed-loop stepper motor driving rack-and-pinion horizontal arm reach."
-  },
-  {
-    id: "arm-pitch-motor",
-    subsystemAxis: "Arm Pitch Motor (Top Base)",
-    componentModel: "MyActuator RMD-X8-120 BLDC Servo + Harmonic Reducer",
-    qty: 1,
-    unitCost: 26000,
-    unitCostFormatted: "₹26,000",
-    totalCost: 26000,
-    totalCostFormatted: "₹26,000",
-    category: "BLDC Servos",
-    badge: "Joint Pitch",
-    notes: "Integrated BLDC servo motor with built-in zero-backlash harmonic drive for high-load arm pitch positioning."
-  },
-  {
-    id: "wrist-pitch-servo",
-    subsystemAxis: "Wrist Pitch Servo (Hand)",
-    componentModel: "MyActuator RMD-X6-60 BLDC Frameless Servo Joint",
-    qty: 1,
-    unitCost: 16500,
-    unitCostFormatted: "₹16,500",
-    totalCost: 16500,
-    totalCostFormatted: "₹16,500",
-    category: "BLDC Servos",
-    badge: "Wrist Pitch",
-    notes: "Compact hollow-shaft BLDC robotic actuator providing high power density and CAN bus control."
-  },
-  {
-    id: "wrist-roll-servo",
-    subsystemAxis: "Wrist Roll Servo (Hand)",
-    componentModel: "MyActuator RMD-X4-36 BLDC Frameless Servo Joint",
-    qty: 1,
-    unitCost: 12500,
-    unitCostFormatted: "₹12,500",
-    totalCost: 12500,
-    totalCostFormatted: "₹12,500",
-    category: "BLDC Servos",
-    badge: "Wrist Roll",
-    notes: "Ultra-compact continuous rotation robotic joint for accurate end-effector orientation."
-  },
-  {
-    id: "gripper-actuator",
-    subsystemAxis: "Gripper Actuator (Hand)",
-    componentModel: "NEMA 17 Lead Screw Stepper Motor & Fingers",
-    qty: 1,
-    unitCost: 3200,
-    unitCostFormatted: "₹3,200",
-    totalCost: 3200,
-    totalCostFormatted: "₹3,200",
-    category: "Stepper Actuation",
-    badge: "End Effector",
-    notes: "Integrated lead-screw stepper mechanism with silicone-padded adaptive parallel fingers."
-  },
-  {
-    id: "mast-controller-safety",
-    subsystemAxis: "Mast Controller & Safety",
-    componentModel: "STM32F407 Board + Limit Switches + Driver Shields",
-    qty: 1,
-    unitCost: 6800,
-    unitCostFormatted: "₹6,800",
-    totalCost: 6800,
-    totalCostFormatted: "₹6,800",
-    category: "Electronics & Vision",
-    badge: "Safety & Logic",
-    notes: "Embedded 168MHz ARM Cortex-M4 real-time controller, optocoupled optical endstops & E-stop loop."
-  },
-  {
-    id: "vision-camera",
-    subsystemAxis: "Vision Camera",
-    componentModel: "Hikrobot Industrial Hand Camera & Mounts",
-    qty: 1,
-    unitCost: 12500,
-    unitCostFormatted: "₹12,500",
-    totalCost: 12500,
-    totalCostFormatted: "₹12,500",
-    category: "Electronics & Vision",
-    badge: "Perception",
-    notes: "Global shutter GigE / USB3 industrial color camera with adjustable focal lens for SKU barcoding and shelf fiducials."
-  },
-  {
-    id: "basket-drag-chains",
-    subsystemAxis: "Basket & Drag Chains",
-    componentModel: "Payload Basket + High-Flex Cable Drag Chains",
+    id: "agv-motor-driver",
+    systemModule: "AGV Mobile Base",
+    itemDescription: "Dual BLDC Motor Controller (24V 10A CAN/PWM)",
+    specification: "AQMD2410BL-K3 dual channel closed-loop driver",
     qty: 1,
     unitCost: 5500,
     unitCostFormatted: "₹5,500",
-    totalCost: 5500,
-    totalCostFormatted: "₹5,500",
-    category: "Structure & Mechanics",
-    badge: "Cable Mgmt",
-    notes: "Reinforced carbon-fiber basket frame with bend-radius limited nylon drag chains for continuous cycling."
-  }
+    subtotal: 5500,
+    subtotalFormatted: "₹5,500",
+    category: "AGV Base",
+  },
+  {
+    id: "agv-battery-bms",
+    systemModule: "AGV Mobile Base",
+    itemDescription: "24V 30Ah LiFePO4 Prismatic Battery Pack + Daly 8S BMS",
+    specification: "High discharge prismatic cells with active balancing BMS",
+    qty: 1,
+    unitCost: 16900,
+    unitCostFormatted: "₹16,900",
+    subtotal: 16900,
+    subtotalFormatted: "₹16,900",
+    category: "AGV Base",
+  },
+  {
+    id: "agv-casters",
+    systemModule: "AGV Mobile Base",
+    itemDescription: "75mm Heavy Duty Polyurethane Swivel Casters (Set of 4)",
+    specification: "Industrial PU caster wheels with dual ball bearings",
+    qty: 1,
+    unitCost: 3150,
+    unitCostFormatted: "₹3,150",
+    subtotal: 3150,
+    subtotalFormatted: "₹3,150",
+    category: "AGV Base",
+  },
+  {
+    id: "agv-compute",
+    systemModule: "AGV Mobile Base",
+    itemDescription: "Raspberry Pi 4 (4GB) + STM32 Motion Controller",
+    specification: "Embedded ROS2 navigation host & real-time motor controller",
+    qty: 1,
+    unitCost: 7000,
+    unitCostFormatted: "₹7,000",
+    subtotal: 7000,
+    subtotalFormatted: "₹7,000",
+    category: "AGV Base",
+  },
+  {
+    id: "agv-vision",
+    systemModule: "AGV Mobile Base",
+    itemDescription: "Downward Industrial QR Camera & 24V Ring Light",
+    specification: "Hikrobot QR barcode global shutter camera with illumination",
+    qty: 1,
+    unitCost: 13700,
+    unitCostFormatted: "₹13,700",
+    subtotal: 13700,
+    subtotalFormatted: "₹13,700",
+    category: "AGV Base",
+  },
+  {
+    id: "agv-safety-harness",
+    systemModule: "AGV Mobile Base",
+    itemDescription: "Safety Bumpers, Relays, Ultrasonics, IMU & Wiring Harness",
+    specification: "Tactile emergency stops, 9-DOF IMU, wiring loom and relays",
+    qty: 1,
+    unitCost: 13400,
+    unitCostFormatted: "₹13,400",
+    subtotal: 13400,
+    subtotalFormatted: "₹13,400",
+    category: "AGV Base",
+  },
+  {
+    id: "agv-chassis-lfam",
+    systemModule: "AGV Manufacturing",
+    itemDescription: "LFAM 3D Printed Composite Chassis (PETG-CF / ABS-CF)",
+    specification: "Large Format Additive Manufacturing carbon-fiber polymer chassis",
+    qty: 1,
+    unitCost: 37500,
+    unitCostFormatted: "₹37,500",
+    subtotal: 37500,
+    subtotalFormatted: "₹37,500",
+    category: "Manufacturing & Assembly",
+  },
+
+  // Subsystem 2: Telescopic Mast & Hand Attachment
+  {
+    id: "mast-stepper-lift",
+    systemModule: "Telescopic Mast",
+    itemDescription: "NEMA 34 Closed-Loop Stepper + 10:1 Planetary Gearbox (Primary Extension)",
+    specification: "8.5 N·m torque closed-loop vertical lift actuator",
+    qty: 1,
+    unitCost: 14500,
+    unitCostFormatted: "₹14,500",
+    subtotal: 14500,
+    subtotalFormatted: "₹14,500",
+    category: "Mast System",
+  },
+  {
+    id: "mast-stepper-extension",
+    systemModule: "Telescopic Mast",
+    itemDescription: "NEMA 23 Closed-Loop Stepper + 5:1 Planetary (Hand Extension)",
+    specification: "Horizontal linear extension arm gearmotor",
+    qty: 1,
+    unitCost: 6200,
+    unitCostFormatted: "₹6,200",
+    subtotal: 6200,
+    subtotalFormatted: "₹6,200",
+    category: "Mast System",
+  },
+  {
+    id: "mast-servo-pitch",
+    systemModule: "Telescopic Mast",
+    itemDescription: "MyActuator RMD-X8-120 BLDC Servo Actuator (Arm Pitch)",
+    specification: "Harmonic reducer frameless joint servo with CAN bus",
+    qty: 1,
+    unitCost: 26000,
+    unitCostFormatted: "₹26,000",
+    subtotal: 26000,
+    subtotalFormatted: "₹26,000",
+    category: "Mast System",
+  },
+  {
+    id: "mast-servos-wrist",
+    systemModule: "Telescopic Mast",
+    itemDescription: "MyActuator RMD-X6-60 & RMD-X4-36 Servos (Wrist Joints)",
+    specification: "Dual compact BLDC wrist pitch & roll frameless joints",
+    qty: 1,
+    unitCost: 29000,
+    unitCostFormatted: "₹29,000",
+    subtotal: 29000,
+    subtotalFormatted: "₹29,000",
+    category: "Mast System",
+  },
+  {
+    id: "mast-gripper",
+    systemModule: "Telescopic Mast",
+    itemDescription: "NEMA 17 Lead Screw Stepper & Gripper Mechanism",
+    specification: "Integrated lead screw mechanism with parallel fingers",
+    qty: 1,
+    unitCost: 3200,
+    unitCostFormatted: "₹3,200",
+    subtotal: 3200,
+    subtotalFormatted: "₹3,200",
+    category: "Mast System",
+  },
+  {
+    id: "mast-controller",
+    systemModule: "Telescopic Mast",
+    itemDescription: "Dedicated Mast STM32 Controller, Limit Switches & CAN Shields",
+    specification: "Embedded controller, endstops, and optocoupled driver board",
+    qty: 1,
+    unitCost: 6800,
+    unitCostFormatted: "₹6,800",
+    subtotal: 6800,
+    subtotalFormatted: "₹6,800",
+    category: "Mast System",
+  },
+  {
+    id: "mast-camera",
+    systemModule: "Telescopic Mast",
+    itemDescription: "Hikrobot Hand Vision Camera & Mounts",
+    specification: "Industrial hand-mounted perception camera with GigE/USB3",
+    qty: 1,
+    unitCost: 12500,
+    unitCostFormatted: "₹12,500",
+    subtotal: 12500,
+    subtotalFormatted: "₹12,500",
+    category: "Mast System",
+  },
+  {
+    id: "mast-structure-cnc",
+    systemModule: "Mast Manufacturing",
+    itemDescription: "10ft 9-Layer Telescopic Structural Channels & CNC Bearings",
+    specification: "Precision milled 6061-T6 aluminum sections and slides",
+    qty: 1,
+    unitCost: 32000,
+    unitCostFormatted: "₹32,000",
+    subtotal: 32000,
+    subtotalFormatted: "₹32,000",
+    category: "Manufacturing & Assembly",
+  },
+  {
+    id: "mast-drag-chains",
+    systemModule: "Mast Manufacturing",
+    itemDescription: "High-Flex Energy Cable Carrier Drag Chains & Brackets",
+    specification: "Continuous bend-radius limited nylon cable carriers",
+    qty: 1,
+    unitCost: 5500,
+    unitCostFormatted: "₹5,500",
+    subtotal: 5500,
+    subtotalFormatted: "₹5,500",
+    category: "Manufacturing & Assembly",
+  },
+
+  // Subsystem 3: Assembly, Testing & Overheads
+  {
+    id: "assembly-labor",
+    systemModule: "Assembly & Overheads",
+    itemDescription: "System Integration, Harness Wiring & Mechanical Assembly Labor",
+    specification: "Mechanical assembly, wire harness termination and quality check",
+    qty: 1,
+    unitCost: 18000,
+    unitCostFormatted: "₹18,000",
+    subtotal: 18000,
+    subtotalFormatted: "₹18,000",
+    category: "Manufacturing & Assembly",
+  },
+  {
+    id: "software-calibration",
+    systemModule: "Assembly & Overheads",
+    itemDescription: "ROS2/VDA5050 Calibration, EKF Tuning & Safety Testing",
+    specification: "Firmware flashing, sensor fusion tuning, and factory validation",
+    qty: 1,
+    unitCost: 15000,
+    unitCostFormatted: "₹15,000",
+    subtotal: 15000,
+    subtotalFormatted: "₹15,000",
+    category: "Manufacturing & Assembly",
+  },
 ];
 
-export const TOTAL_COST = 143700;
-export const TOTAL_COST_FORMATTED = "₹1,43,700";
-export const SUBSYSTEM_TITLE = "MAST SUBSYSTEM TOTAL";
+export const TOTAL_FACTORY_COST = 283250;
+export const TOTAL_FACTORY_COST_FORMATTED = "₹2,83,250";
 
-export const CATEGORY_SUMMARIES = [
+export const PRICING_MODEL = {
+  factoryCost: 283250,
+  factoryCostFormatted: "₹2,83,250",
+  agvDirectCost: 114550,
+  agvDirectCostFormatted: "₹1,14,550",
+  mastDirectCost: 135700,
+  mastDirectCostFormatted: "₹1,35,700",
+  assemblyTestingCost: 33000,
+  assemblyTestingCostFormatted: "₹33,000",
+  prototypeRate: {
+    margin: "25%",
+    calculatedPrice: 377667,
+    calculatedFormatted: "₹3,77,600",
+    range: "₹3,75,000 – ₹3,95,000",
+    usdRange: "~$4,500 USD",
+    notes: "Ideal for SIH 2026 presentation metrics, academic pilot testing, or grant budget allocation.",
+  },
+  commercialPrice: {
+    margin: "40%",
+    calculatedPrice: 472083,
+    calculatedFormatted: "₹4,72,000",
+    range: "₹4,50,000 – ₹4,80,000",
+    usdRange: "~$5,500 – $5,800 USD",
+    notes: "Margin coverage for warranty support, WMS integration software, and distributor commissions.",
+  },
+};
+
+export const MODULE_SUMMARIES = [
   {
-    category: "BLDC Servos",
-    cost: 55000,
-    costFormatted: "₹55,000",
-    percentage: 38.3,
-    color: "#3b82f6", // blue-500
-    count: 3
+    module: "AGV Mobile Base",
+    cost: 77050,
+    costFormatted: "₹77,050",
+    percentage: 27.2,
+    count: 7,
   },
   {
-    category: "Structure & Mechanics",
-    cost: 45500,
-    costFormatted: "₹45,500",
-    percentage: 31.7,
-    color: "#10b981", // emerald-500
-    count: 3
+    module: "Telescopic Mast",
+    cost: 98200,
+    costFormatted: "₹98,200",
+    percentage: 34.7,
+    count: 7,
   },
   {
-    category: "Stepper Actuation",
-    cost: 23900,
-    costFormatted: "₹23,900",
-    percentage: 16.6,
-    color: "#f59e0b", // amber-500
-    count: 3
+    module: "AGV Manufacturing",
+    cost: 37500,
+    costFormatted: "₹37,500",
+    percentage: 13.2,
+    count: 1,
   },
   {
-    category: "Electronics & Vision",
-    cost: 19300,
-    costFormatted: "₹19,300",
-    percentage: 13.4,
-    color: "#8b5cf6", // purple-500
-    count: 2
-  }
+    module: "Mast Manufacturing",
+    cost: 37500,
+    costFormatted: "₹37,500",
+    percentage: 13.2,
+    count: 2,
+  },
+  {
+    module: "Assembly & Overheads",
+    cost: 33000,
+    costFormatted: "₹33,000",
+    percentage: 11.7,
+    count: 2,
+  },
 ];
 
-export const RAW_CSV = `Subsystem / Axis,Component Model / Specification,Qty,Est. Unit Cost (INR),Total Cost (INR)
-Primary Mast Structure,10ft 9-Layer Aluminum Telescopic Mast Hardware & Bearings,1,"₹28,000","₹28,000"
-Secondary Hand Arm,3ft Horizontal Expansion Arm Aluminum Channel & Slides,1,"₹12,000","₹12,000"
-Primary Mast Motor,NEMA 34 Closed-Loop Stepper + 10:1 Planetary Gearbox,1,"₹14,500","₹14,500"
-Hand Expansion Motor,NEMA 23 Closed-Loop Stepper + 5:1 Planetary Gearbox,1,"₹6,200","₹6,200"
-Arm Pitch Motor (Top Base),MyActuator RMD-X8-120 BLDC Servo + Harmonic Reducer,1,"₹26,000","₹26,000"
-Wrist Pitch Servo (Hand),MyActuator RMD-X6-60 BLDC Frameless Servo Joint,1,"₹16,500","₹16,500"
-Wrist Roll Servo (Hand),MyActuator RMD-X4-36 BLDC Frameless Servo Joint,1,"₹12,500","₹12,500"
-Gripper Actuator (Hand),NEMA 17 Lead Screw Stepper Motor & Fingers,1,"₹3,200","₹3,200"
-Mast Controller & Safety,STM32F407 Board + Limit Switches + Driver Shields,1,"₹6,800","₹6,800"
-Vision Camera,Hikrobot Industrial Hand Camera & Mounts,1,"₹12,500","₹12,500"
-Basket & Drag Chains,Payload Basket + High-Flex Cable Drag Chains,1,"₹5,500","₹5,500"
-MAST SUBSYSTEM TOTAL,,,,"₹1,43,700"`;
+export const RAW_CSV = `System Module,Item Description,Qty,Unit Cost (INR),Subtotal (INR)
+AGV Mobile Base,24V 250W BLDC Servo Drive Wheel Modules (Pair),2,"₹8,700","₹17,400"
+AGV Mobile Base,Dual BLDC Motor Controller (24V 10A CAN/PWM),1,"₹5,500","₹5,500"
+AGV Mobile Base,24V 30Ah LiFePO4 Prismatic Battery Pack + Daly 8S BMS),1,"₹16,900","₹16,900"
+AGV Mobile Base,75mm Heavy Duty Polyurethane Swivel Casters (Set of 4),1,"₹3,150","₹3,150"
+AGV Mobile Base,Raspberry Pi 4 (4GB) + STM32 Motion Controller,1,"₹7,000","₹7,000"
+AGV Mobile Base,Downward Industrial QR Camera & 24V Ring Light,1,"₹13,700","₹13,700"
+AGV Mobile Base,Safety Bumpers, Relays, Ultrasonics, IMU & Wiring Harness,1,"₹13,400","₹13,400"
+AGV Manufacturing,LFAM 3D Printed Composite Chassis (PETG-CF / ABS-CF),1,"₹37,500","₹37,500"
+Telescopic Mast,NEMA 34 Closed-Loop Stepper + 10:1 Planetary Gearbox (Primary Extension),1,"₹14,500","₹14,500"
+Telescopic Mast,NEMA 23 Closed-Loop Stepper + 5:1 Planetary (Hand Extension),1,"₹6,200","₹6,200"
+Telescopic Mast,MyActuator RMD-X8-120 BLDC Servo Actuator (Arm Pitch),1,"₹26,000","₹26,000"
+Telescopic Mast,MyActuator RMD-X6-60 & RMD-X4-36 Servos (Wrist Joints),1,"₹29,000","₹29,000"
+Telescopic Mast,NEMA 17 Lead Screw Stepper & Gripper Mechanism,1,"₹3,200","₹3,200"
+Telescopic Mast,Dedicated Mast STM32 Controller, Limit Switches & CAN Shields,1,"₹6,800","₹6,800"
+Telescopic Mast,Hikrobot Hand Vision Camera & Mounts,1,"₹12,500","₹12,500"
+Mast Manufacturing,10ft 9-Layer Telescopic Structural Channels & CNC Bearings,1,"₹32,000","₹32,000"
+Mast Manufacturing,High-Flex Energy Cable Carrier Drag Chains & Brackets,1,"₹5,500","₹5,500"
+Assembly & Overheads,System Integration, Harness Wiring & Mechanical Assembly Labor,1,"₹18,000","₹18,000"
+Assembly & Overheads,ROS2/VDA5050 Calibration, EKF Tuning & Safety Testing,1,"₹15,000","₹15,000"
+TOTAL FACTORY PRODUCTION COST,,,,₹2,83,250`;
