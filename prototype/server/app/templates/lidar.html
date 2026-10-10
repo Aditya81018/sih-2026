@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIH2026 - ESP32 275° Sonar Radar / LIDAR Scanner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM TOKENS
+       ========================================================================== */
+    :root {
+      --color-primary: #024ad8;
+      --color-primary-deep: #0e3191;
+      --color-accent: #00c6ff;
+      --color-radar-beam: #00f2ff;
+      --color-ink: #1a1a1a;
+      --color-ink-dark: #0b0f19;
+      --color-card-bg: rgba(26, 34, 52, 0.85);
+      --color-canvas: #ffffff;
+      --color-on-ink: #ffffff;
+      --color-charcoal: #94a3b8;
+      --color-success: #22c55e;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      --color-hairline: rgba(255, 255, 255, 0.1);
+
+      --rounded-md: 8px;
+      --rounded-xl: 16px;
+      --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      font-family: var(--font-family);
+      background-color: var(--color-ink-dark);
+      color: var(--color-on-ink);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* Header Navigation */
+    header {
+      height: 64px;
+      background-color: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-hairline);
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #024ad8, #00c6ff);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-logo i {
+      color: #fff;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #ffffff, #93c5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-link {
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--rounded-md);
+      color: var(--color-charcoal);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-link.active {
+      background-color: rgba(2, 74, 216, 0.25);
+      border: 1px solid rgba(0, 198, 255, 0.3);
+      color: var(--color-accent);
+    }
+
+    /* Main Dashboard Layout */
+    main {
+      flex: 1;
+      padding: 1.5rem;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1100px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Radar Viewport Section */
+    .radar-section {
+      background: var(--color-card-bg);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-xl);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .radar-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .radar-title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .radar-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .status-badge {
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-badge.connected {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-badge.disconnected {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: currentColor;
+    }
+
+    /* Radar Canvas Container */
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 850px;
+      aspect-ratio: 16 / 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #radarCanvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      background: #040914;
+      border: 1px solid rgba(0, 198, 255, 0.25);
+    }
+
+    /* Control & Metrics Panel */
+    .panel-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: var(--color-card-bg);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-xl);
+      padding: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .metric-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .metric-box.full-width {
+      grid-column: span 2;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--color-charcoal);
+      font-weight: 500;
+    }
+
+    .metric-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: #fff;
+    }
+
+    .metric-value.accent {
+      color: var(--color-accent);
+    }
+
+    .metric-value.warning {
+      color: var(--color-warning);
+    }
+
+    .metric-value.danger {
+      color: var(--color-danger);
+    }
+
+    /* Range & Control Buttons */
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: var(--rounded-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #024ad8, #00c6ff);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border-color: var(--color-hairline);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.35);
+    }
+
+    /* Range Selector Pills */
+    .range-selector {
+      display: flex;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 0.25rem;
+      border-radius: 10px;
+      border: 1px solid var(--color-hairline);
+      gap: 0.25rem;
+    }
+
+    .range-btn {
+      flex: 1;
+      padding: 0.45rem 0.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--color-charcoal);
+      transition: all 0.2s ease;
+    }
+
+    .range-btn.active {
+      background: var(--color-primary);
+      color: #fff;
+    }
+
+    /* Direction Indicator Banner */
+    .sweep-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 1rem;
+      background: rgba(2, 74, 216, 0.15);
+      border: 1px solid rgba(0, 198, 255, 0.25);
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--color-accent);
+    }
+
+    .sweep-dir-tag {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="brand-group">
+        <div class="brand-logo">
+          <i data-lucide="radar"></i>
+        </div>
+        <div class="brand-title">SIH2026 - 275° Sonar Radar</div>
+      </div>
+
+      <nav class="nav-links">
+        <a href="/robot" class="nav-link"><i data-lucide="bot"></i> Unified Robot</a>
+        <a href="/car" class="nav-link"><i data-lucide="car"></i> Car</a>
+        <a href="/arm" class="nav-link"><i data-lucide="activity"></i> Arm</a>
+        <a href="/live" class="nav-link"><i data-lucide="video"></i> Live Feed</a>
+        <a href="/lidar" class="nav-link active"><i data-lucide="radar"></i> Sonar Radar</a>
+        <a href="/docs" target="_blank" class="nav-link"><i data-lucide="file-text"></i> API Docs</a>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+      <!-- Left: High Performance Radar Viewport -->
+      <section class="radar-section">
+        <div class="radar-header">
+          <div class="radar-title-group">
+            <i data-lucide="scan" style="color: var(--color-accent);"></i>
+            <span class="radar-title">Real-Time Acoustic Map & Shadow Occlusion</span>
+          </div>
+
+          <div id="statusBadge" class="status-badge disconnected">
+            <span class="pulse-dot"></span>
+            <span id="statusText">Connecting...</span>
+          </div>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="radarCanvas"></canvas>
+        </div>
+      </section>
+
+      <!-- Right: Control & Telemetry Dashboard -->
+      <section class="panel-section">
+        <!-- Sweep Status Banner -->
+        <div class="sweep-indicator">
+          <span>Sweep Status</span>
+          <div class="sweep-dir-tag">
+            <i id="sweepIcon" data-lucide="rotate-cw"></i>
+            <span id="sweepDirText">CLOCKWISE (CW)</span>
+          </div>
+        </div>
+
+        <!-- Telemetry Metrics Card -->
+        <div class="card">
+          <div class="card-title">
+            <i data-lucide="cpu"></i> Telemetry & Metrics
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Current Angle</span>
+              <span id="metricAngle" class="metric-value accent">0°</span>
+            </div>
+
+            <div class="metric-box">
+              <span class="metric-label">Sonar Distance</span>
+              <span id="metricDistance" class="metric-value">-- cm</span>
+            </div>
+
+            <div class="metric-box">
+              <span class="metric-label">Nearest Obstacle</span>
+              <span id="metricNearest" class="metric-value warning">-- cm</span>
+            </div>
+
+            <div class="metric-box">
+              <span class="metric-label">Total Scan Points</span>
+              <span id="metricPoints" class="metric-value">0</span>
+            </div>
+
+            <div class="metric-box full-width">
+              <span class="metric-label">Resolution & Coverage</span>
+              <span id="metricResolution" class="metric-value" style="font-size: 1rem; color: #94a3b8;">2° / Step | 0° to 275° Sweep</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scan Speed Multiplier & Step Angle Selector -->
+        <div class="card">
+          <div class="card-title">
+            <i data-lucide="zap"></i> Speed Multiplier (Step Angle)
+          </div>
+
+          <div class="range-selector">
+            <div class="range-btn step-btn" onclick="setStepAngle(1)">1° (Detailed)</div>
+            <div class="range-btn step-btn active" onclick="setStepAngle(2)">2° (Fast ⚡)</div>
+            <div class="range-btn step-btn" onclick="setStepAngle(4)">4° (Turbo 🚀)</div>
+            <div class="range-btn step-btn" onclick="setStepAngle(5)">5° (Ultra ⚡)</div>
+          </div>
+        </div>
+
+        <!-- Radar Range Scale Selector -->
+        <div class="card">
+          <div class="card-title">
+            <i data-lucide="maximize-2"></i> Radar Distance Range Scale
+          </div>
+
+          <div class="range-selector">
+            <div class="range-btn scale-btn" onclick="setRangeScale(50)">50 cm</div>
+            <div class="range-btn scale-btn active" onclick="setRangeScale(100)">100 cm</div>
+            <div class="range-btn scale-btn" onclick="setRangeScale(200)">200 cm</div>
+            <div class="range-btn scale-btn" onclick="setRangeScale(400)">400 cm</div>
+          </div>
+        </div>
+
+        <!-- Controls Card -->
+        <div class="card">
+          <div class="card-title">
+            <i data-lucide="sliders"></i> Scanner Controls
+          </div>
+
+          <div class="btn-group">
+            <button id="btnToggleScan" class="btn btn-primary" onclick="toggleScanner()">
+              <i data-lucide="pause"></i> Pause Scanning
+            </button>
+
+            <div class="btn-row">
+              <button class="btn btn-secondary" onclick="resetHomePosition()">
+                <i data-lucide="home"></i> Reset 0°
+              </button>
+
+              <button class="btn btn-danger" onclick="clearRadarMap()">
+                <i data-lucide="trash-2"></i> Clear Map
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const canvas = document.getElementById('radarCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let maxRangeCM = 100;
+    let currentStepAngle = 2;
+    let currentAngleDeg = 0;
+    let currentDistanceCM = null;
+    let isClockwise = true;
+    let scannerActive = true;
+    let ws = null;
+
+    // Scan map: angle -> distance
+    const scanMap = new Map();
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      drawRadar();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    function setRangeScale(cm) {
+      maxRangeCM = cm;
+      document.querySelectorAll('.scale-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.includes(cm));
+      });
+      drawRadar();
+    }
+
+    function setStepAngle(deg) {
+      currentStepAngle = deg;
+      document.querySelectorAll('.step-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.startsWith(`${deg}°`));
+      });
+      document.getElementById('metricResolution').textContent = `${deg}° / Step | 0° to 275° Sweep`;
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ step_angle: deg }));
+      }
+    }
+
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/api/v1/lidar/ws/controller`;
+
+      updateStatus(false, "Connecting...");
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        updateStatus(true, "Scanner Live");
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+
+          if (msg.type === 'INIT_MAP') {
+            scanMap.clear();
+            if (msg.scan_map) {
+              Object.entries(msg.scan_map).forEach(([ang, pt]) => {
+                scanMap.set(parseInt(ang), pt.distance);
+              });
+            }
+            if (msg.state) {
+              scannerActive = msg.state.active;
+              if (msg.state.step_angle) {
+                currentStepAngle = msg.state.step_angle;
+                document.querySelectorAll('.step-btn').forEach(btn => {
+                  btn.classList.toggle('active', btn.textContent.startsWith(`${currentStepAngle}°`));
+                });
+                document.getElementById('metricResolution').textContent = `${currentStepAngle}° / Step | 0° to 275° Sweep`;
+              }
+              updateScanStateUI(msg.state);
+            }
+            drawRadar();
+            updateMetrics();
+          } else if (msg.type === 'SCAN_POINT') {
+            const pt = msg.point;
+            currentAngleDeg = pt.angle;
+            currentDistanceCM = pt.distance;
+            isClockwise = (pt.sweep_direction === 'CW');
+
+            scanMap.set(currentAngleDeg, currentDistanceCM);
+
+            drawRadar();
+            updateMetrics();
+          } else if (msg.type === 'STATE_UPDATE') {
+            if (msg.state) {
+              scannerActive = msg.state.active;
+              if (msg.state.step_angle) {
+                currentStepAngle = msg.state.step_angle;
+                document.querySelectorAll('.step-btn').forEach(btn => {
+                  btn.classList.toggle('active', btn.textContent.startsWith(`${currentStepAngle}°`));
+                });
+                document.getElementById('metricResolution').textContent = `${currentStepAngle}° / Step | 0° to 275° Sweep`;
+              }
+              updateScanStateUI(msg.state);
+            }
+          }
+        } catch (err) {
+          console.error("Error parsing WS packet:", err);
+        }
+      };
+
+      ws.onclose = () => {
+        updateStatus(false, "Disconnected");
+        setTimeout(connectWebSocket, 2000);
+      };
+
+      ws.onerror = (err) => {
+        ws.close();
+      };
+    }
+
+    function updateStatus(connected, text) {
+      const badge = document.getElementById('statusBadge');
+      const label = document.getElementById('statusText');
+      badge.className = `status-badge ${connected ? 'connected' : 'disconnected'}`;
+      label.textContent = text;
+    }
+
+    function updateScanStateUI(state) {
+      const btn = document.getElementById('btnToggleScan');
+      if (state.active) {
+        btn.innerHTML = `<i data-lucide="pause"></i> Pause Scanning`;
+        btn.className = 'btn btn-primary';
+      } else {
+        btn.innerHTML = `<i data-lucide="play"></i> Resume Scanning`;
+        btn.className = 'btn btn-secondary';
+      }
+      lucide.createIcons();
+    }
+
+    function toggleScanner() {
+      scannerActive = !scannerActive;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ active: scannerActive }));
+      }
+    }
+
+    function resetHomePosition() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ reset: true }));
+      }
+    }
+
+    function clearRadarMap() {
+      scanMap.clear();
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ clear_map: true }));
+      }
+      drawRadar();
+      updateMetrics();
+    }
+
+    function updateMetrics() {
+      document.getElementById('metricAngle').textContent = `${currentAngleDeg}°`;
+
+      const distElem = document.getElementById('metricDistance');
+      if (typeof currentDistanceCM === 'number' && currentDistanceCM > 0) {
+        distElem.textContent = `${currentDistanceCM.toFixed(1)} cm`;
+        distElem.className = 'metric-value';
+      } else {
+        distElem.textContent = `Out of Range`;
+        distElem.className = 'metric-value warning';
+      }
+
+      let minVal = Infinity;
+      let minAngle = -1;
+      scanMap.forEach((dist, ang) => {
+        if (typeof dist === 'number' && dist > 0 && dist < minVal) {
+          minVal = dist;
+          minAngle = ang;
+        }
+      });
+
+      const nearestElem = document.getElementById('metricNearest');
+      if (minVal !== Infinity) {
+        nearestElem.textContent = `${minVal.toFixed(1)} cm @ ${minAngle}°`;
+        nearestElem.className = minVal < 30 ? 'metric-value danger' : 'metric-value warning';
+      } else {
+        nearestElem.textContent = `-- cm`;
+        nearestElem.className = 'metric-value';
+      }
+
+      document.getElementById('metricPoints').textContent = scanMap.size;
+
+      const dirText = document.getElementById('sweepDirText');
+      const dirIcon = document.getElementById('sweepIcon');
+      if (isClockwise) {
+        dirText.textContent = "CLOCKWISE (CW)";
+        dirIcon.setAttribute('data-lucide', 'rotate-cw');
+      } else {
+        dirText.textContent = "COUNTER-CW (CCW)";
+        dirIcon.setAttribute('data-lucide', 'rotate-ccw');
+      }
+      lucide.createIcons();
+    }
+
+    // =========================================================================
+    // HIGH-PERFORMANCE RADAR RENDERER
+    // =========================================================================
+    function drawRadar() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      if (!w || !h) return;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const centerX = w / 2;
+      const centerY = h * 0.85;
+      const radius = Math.min(w * 0.45, h * 0.75);
+
+      const startAngleRad = (-90 - 137.5) * (Math.PI / 180);
+      const endAngleRad = (-90 + 137.5) * (Math.PI / 180);
+
+      function scannerDegToRad(deg) {
+        return (-90 - 137.5 + deg) * (Math.PI / 180);
+      }
+
+      ctx.save();
+
+      // 1. Clip 275° Sector
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, startAngleRad, endAngleRad);
+      ctx.closePath();
+      ctx.fillStyle = '#030814';
+      ctx.fill();
+      ctx.clip();
+
+      // 2. Clear Scanned Field Tint
+      const sortedAngles = Array.from(scanMap.keys()).sort((a, b) => a - b);
+      if (sortedAngles.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+
+        sortedAngles.forEach(ang => {
+          const dist = scanMap.get(ang);
+          const rad = scannerDegToRad(ang);
+          const effectiveDist = (typeof dist === 'number' && dist > 0 && dist <= maxRangeCM) ? dist : maxRangeCM;
+          const r = (effectiveDist / maxRangeCM) * radius;
+          ctx.lineTo(centerX + Math.cos(rad) * r, centerY + Math.sin(rad) * r);
+        });
+
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 198, 255, 0.12)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0, 242, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 3. Dark Obstacle Shadow Occlusion (Only behind detected obstacles)
+        for (let i = 0; i < sortedAngles.length - 1; i++) {
+          const a1 = sortedAngles[i];
+          const a2 = sortedAngles[i + 1];
+          const d1 = scanMap.get(a1);
+          const d2 = scanMap.get(a2);
+
+          const hasObs1 = (typeof d1 === 'number' && d1 > 0 && d1 < maxRangeCM);
+          const hasObs2 = (typeof d2 === 'number' && d2 > 0 && d2 < maxRangeCM);
+
+          if (hasObs1 || hasObs2) {
+            const rad1 = scannerDegToRad(a1);
+            const rad2 = scannerDegToRad(a2);
+
+            const effD1 = hasObs1 ? d1 : maxRangeCM;
+            const effD2 = hasObs2 ? d2 : maxRangeCM;
+
+            const r1_obs = (effD1 / maxRangeCM) * radius;
+            const r2_obs = (effD2 / maxRangeCM) * radius;
+
+            const x1_obs = centerX + Math.cos(rad1) * r1_obs;
+            const y1_obs = centerY + Math.sin(rad1) * r1_obs;
+
+            const x2_obs = centerX + Math.cos(rad2) * r2_obs;
+            const y2_obs = centerY + Math.sin(rad2) * r2_obs;
+
+            const x2_max = centerX + Math.cos(rad2) * radius;
+            const y2_max = centerY + Math.sin(rad2) * radius;
+
+            const x1_max = centerX + Math.cos(rad1) * radius;
+            const y1_max = centerY + Math.sin(rad1) * radius;
+
+            ctx.beginPath();
+            ctx.moveTo(x1_obs, y1_obs);
+            ctx.lineTo(x2_obs, y2_obs);
+            ctx.lineTo(x2_max, y2_max);
+            ctx.lineTo(x1_max, y1_max);
+            ctx.closePath();
+
+            ctx.fillStyle = 'rgba(1, 3, 8, 0.9)';
+            ctx.fill();
+          }
+        }
+      }
+
+      // 4. Concentric Range Rings
+      const rings = 4;
+      ctx.strokeStyle = 'rgba(0, 198, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+
+      for (let i = 1; i <= rings; i++) {
+        const r = (radius / rings) * i;
+        const distVal = Math.round((maxRangeCM / rings) * i);
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, r, startAngleRad, endAngleRad);
+        ctx.stroke();
+
+        ctx.font = '10px "JetBrains Mono"';
+        ctx.fillStyle = 'rgba(0, 198, 255, 0.6)';
+        ctx.fillText(`${distVal}cm`, centerX + 6, centerY - r + 12);
+      }
+      ctx.setLineDash([]);
+
+      // 5. Radial Grid Sector Lines
+      const tickAngles = [0, 45, 90, 137.5, 180, 225, 275];
+      ctx.strokeStyle = 'rgba(0, 198, 255, 0.2)';
+      ctx.lineWidth = 1;
+
+      tickAngles.forEach(ang => {
+        const rad = scannerDegToRad(ang);
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + Math.cos(rad) * radius, centerY + Math.sin(rad) * radius);
+        ctx.stroke();
+
+        const labelX = centerX + Math.cos(rad) * (radius + 18);
+        const labelY = centerY + Math.sin(rad) * (radius + 18);
+        ctx.font = '11px "Inter"';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${ang}°`, labelX, labelY);
+      });
+
+      // 6. Obstacle Point Blips
+      scanMap.forEach((distCM, angDeg) => {
+        if (typeof distCM !== 'number' || distCM <= 0 || distCM > maxRangeCM) return;
+
+        const rad = scannerDegToRad(angDeg);
+        const normDist = distCM / maxRangeCM;
+        const ptRadius = normDist * radius;
+
+        const ptX = centerX + Math.cos(rad) * ptRadius;
+        const ptY = centerY + Math.sin(rad) * ptRadius;
+
+        let pointColor = '#00c6ff';
+        if (distCM < 30) {
+          pointColor = '#ef4444';
+        } else if (distCM < 70) {
+          pointColor = '#f59e0b';
+        }
+
+        ctx.beginPath();
+        ctx.arc(ptX, ptY, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = pointColor;
+        ctx.fill();
+      });
+
+      // 7. Active Sweeping Beam Line
+      const currentRad = scannerDegToRad(currentAngleDeg);
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + Math.cos(currentRad) * radius, centerY + Math.sin(currentRad) * radius);
+      ctx.strokeStyle = '#00f2ff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Center Origin Marker
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#00c6ff';
+      ctx.fill();
+    }
+
+    window.onload = () => {
+      resizeCanvas();
+      connectWebSocket();
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIH2026 - ESP32-CAM High-FPS Vision System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM TOKENS (from DESIGN.md)
+       ========================================================================== */
+    :root {
+      --color-primary: #024ad8;        /* HP Electric Blue */
+      --color-primary-deep: #0e3191;   /* Deep Navy Pressed */
+      --color-ink: #1a1a1a;            /* Ink Surface */
+      --color-ink-dark: #0b0f19;       /* Deep Page Canvas */
+      --color-canvas: #ffffff;
+      --color-on-ink: #ffffff;
+      --color-charcoal: #94a3b8;
+      --color-success: #22c55e;
+      --color-hairline: rgba(255, 255, 255, 0.08);
+
+      --rounded-md: 4px;                /* Button & Input Radius */
+      --rounded-xl: 16px;               /* Card & Viewport Radius */
+      --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      font-family: var(--font-family);
+      background-color: var(--color-ink-dark);
+      color: var(--color-on-ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* App Shell Layout */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Top Utility Header */
+    header {
+      height: 52px;
+      background-color: var(--color-ink);
+      border-bottom: 1px solid var(--color-hairline);
+      padding: 0 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--color-primary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      color: var(--color-on-ink);
+    }
+
+    .brand-sub {
+      font-size: 0.75rem;
+      color: var(--color-charcoal);
+      font-weight: 400;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Main Viewport Grid: Huge Camera Screen + Right Details Panel */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1rem;
+      padding: 1rem;
+      height: calc(100vh - 52px);
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto;
+        overflow-y: auto;
+      }
+    }
+
+    /* Big Screen Camera Viewport */
+    .camera-viewport-card {
+      background: #000000;
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-xl);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .camera-viewport-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Connection mode badge */
+    .stream-mode-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .stream-mode-badge.websocket {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .stream-mode-badge.mjpeg {
+      background: rgba(234, 179, 8, 0.2);
+      color: #eab308;
+      border: 1px solid rgba(234, 179, 8, 0.3);
+    }
+
+    .stream-mode-badge.offline {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Live indicator */
+    .live-indicator {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 10;
+      background: rgba(239, 68, 68, 0.85);
+      color: white;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Right Details Side Panel */
+    .details-side-panel {
+      background-color: var(--color-ink);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-xl);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      height: 100%;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .panel-section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--color-charcoal);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Stat Cards */
+    .stat-card-big {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--color-hairline);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .stat-card-big .val {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--color-success);
+      line-height: 1;
+    }
+
+    .stat-card-big .lbl {
+      font-size: 0.75rem;
+      color: var(--color-charcoal);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .details-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--color-hairline);
+      font-size: 0.875rem;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      color: var(--color-charcoal);
+    }
+
+    .detail-val {
+      font-weight: 600;
+      color: var(--color-on-ink);
+    }
+
+    .btn {
+      width: 100%;
+      height: 44px;
+      border-radius: var(--rounded-md);
+      border: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(2, 74, 216, 0.35);
+    }
+
+    .btn-primary:hover {
+      background-color: #023eb5;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      background-color: var(--color-primary-deep);
+      transform: translateY(0);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      color: var(--color-on-ink);
+      border: 1px solid var(--color-hairline);
+    }
+
+    .btn-outline:hover {
+      background-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .icon-sm {
+      width: 16px;
+      height: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Top Utility Header -->
+    <header>
+      <div class="brand-group">
+        <div class="brand-logo">
+          <i data-lucide="video" class="icon-sm"></i>
+        </div>
+        <div>
+          <span class="brand-title">ESP32-CAM Vision Station</span>
+          <span class="brand-sub"> &bull; SIH2026</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="/docs" target="_blank" class="btn btn-outline" style="height: 32px; padding: 0 12px; font-size: 0.75rem;">
+          <i data-lucide="file-code-2" class="icon-sm"></i> DOCS
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+      <!-- Big Screen Camera Viewport -->
+      <div class="camera-viewport-card">
+        <span class="stream-mode-badge offline" id="modeBadge">Connecting...</span>
+        <span class="live-indicator" id="liveIndicator" style="display: none;">
+          <span class="live-dot"></span> LIVE
+        </span>
+        <img id="streamPlayer" alt="ESP32 Live Feed" />
+      </div>
+
+      <!-- Right Details Side Panel -->
+      <div class="details-side-panel">
+        <div>
+          <div class="panel-section-title">Performance Metrics</div>
+          <div class="stat-card-big">
+            <div class="val" id="panelFps">0.0</div>
+            <div class="lbl">Frames Per Second</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel-section-title">Camera Details</div>
+          <div class="details-list">
+            <div class="detail-row">
+              <span class="detail-label">Device ID</span>
+              <span class="detail-val" id="deviceId">esp32-cam-01</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Resolution</span>
+              <span class="detail-val">320 &times; 240 (High FPS)</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Protocol</span>
+              <span class="detail-val" id="streamMode">WebSocket</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Total Frames</span>
+              <span class="detail-val" id="frameCount">0</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Last Frame</span>
+              <span class="detail-val" id="lastTimestamp">--:--:--</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+          <button class="btn btn-primary" onclick="connectWebSocket()">
+            <i data-lucide="refresh-cw" class="icon-sm"></i> RECONNECT WEBSOCKET
+          </button>
+          <button class="btn btn-outline" onclick="downloadSnapshot()">
+            <i data-lucide="camera" class="icon-sm"></i> CAPTURE SNAPSHOT
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    const streamPlayer = document.getElementById('streamPlayer');
+    const frameCountEl = document.getElementById('frameCount');
+    const lastTimestampEl = document.getElementById('lastTimestamp');
+    const deviceIdEl = document.getElementById('deviceId');
+    const panelFps = document.getElementById('panelFps');
+    const modeBadge = document.getElementById('modeBadge');
+    const liveIndicator = document.getElementById('liveIndicator');
+    const streamModeEl = document.getElementById('streamMode');
+
+    let ws = null;
+    let currentBlobUrl = null;
+    let localFrameCount = 0;
+    let localTotalFrames = 0;
+    let lastFpsCalcTime = performance.now();
+
+    function setMode(mode) {
+      if (mode === 'websocket') {
+        modeBadge.textContent = '⚡ WebSocket Max FPS';
+        modeBadge.className = 'stream-mode-badge websocket';
+        streamModeEl.textContent = 'WebSocket Binary';
+        liveIndicator.style.display = 'flex';
+      } else if (mode === 'mjpeg') {
+        modeBadge.textContent = '🔁 MJPEG Stream';
+        modeBadge.className = 'stream-mode-badge mjpeg';
+        streamModeEl.textContent = 'HTTP MJPEG';
+        liveIndicator.style.display = 'flex';
+      } else {
+        modeBadge.textContent = '⏳ Disconnected';
+        modeBadge.className = 'stream-mode-badge offline';
+        streamModeEl.textContent = 'Disconnected';
+        liveIndicator.style.display = 'none';
+      }
+    }
+
+    function connectWebSocket() {
+      if (ws) {
+        try { ws.close(); } catch(e) {}
+      }
+
+      setMode('offline');
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${location.host}/api/v1/camera/ws`;
+
+      ws = new WebSocket(wsUrl);
+      ws.binaryType = 'blob';
+
+      ws.onopen = () => {
+        setMode('websocket');
+        console.log('[WEBSOCKET] Connected to server high-speed stream');
+      };
+
+      ws.onmessage = (event) => {
+        if (event.data instanceof Blob) {
+          const newUrl = URL.createObjectURL(event.data);
+          streamPlayer.src = newUrl;
+          if (currentBlobUrl) {
+            URL.revokeObjectURL(currentBlobUrl);
+          }
+          currentBlobUrl = newUrl;
+
+          // Real-time client-side FPS measurement
+          localFrameCount++;
+          localTotalFrames++;
+          frameCountEl.textContent = localTotalFrames.toLocaleString();
+          lastTimestampEl.textContent = new Date().toLocaleTimeString();
+
+          const now = performance.now();
+          const elapsed = now - lastFpsCalcTime;
+          if (elapsed >= 1000) {
+            const calculatedFps = ((localFrameCount * 1000) / elapsed).toFixed(1);
+            panelFps.textContent = calculatedFps;
+            localFrameCount = 0;
+            lastFpsCalcTime = now;
+          }
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.warn('[WEBSOCKET] Error, falling back to HTTP MJPEG stream', err);
+        fallbackToMjpeg();
+      };
+
+      ws.onclose = () => {
+        console.warn('[WEBSOCKET] Closed');
+        setMode('offline');
+      };
+    }
+
+    function fallbackToMjpeg() {
+      setMode('mjpeg');
+      streamPlayer.src = '/api/v1/camera/stream?t=' + Date.now();
+    }
+
+    function downloadSnapshot() {
+      const a = document.createElement('a');
+      a.href = '/api/v1/camera/latest';
+      a.download = 'camera_snapshot.jpg';
+      a.click();
+    }
+
+    // Connect WebSocket on load
+    connectWebSocket();
+  </script>
+</body>
+</html>

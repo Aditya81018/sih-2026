@@ -1,0 +1,22 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables
+.env
+
+# Uploads & Temp files
+uploads/
+*.log
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIH2026 - ESP32 2-Wheel Robot Car Controller</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM TOKENS (matching arm.html & live.html)
+       ========================================================================== */
+    :root {
+      --color-primary: #024ad8;        /* HP Electric Blue */
+      --color-primary-deep: #0e3191;   /* Deep Navy Pressed */
+      --color-primary-glow: rgba(2, 74, 216, 0.4);
+      --color-accent: #00c6ff;         /* Cyan Accent */
+      --color-ink: #1a1a1a;            /* Ink Surface */
+      --color-ink-dark: #0b0f19;       /* Deep Page Canvas */
+      --color-canvas: #ffffff;
+      --color-on-ink: #ffffff;
+      --color-charcoal: #94a3b8;
+      --color-success: #22c55e;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      --color-hairline: rgba(255, 255, 255, 0.08);
+
+      --rounded-md: 8px;
+      --rounded-xl: 16px;
+      --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      font-family: var(--font-family);
+      background-color: var(--color-ink-dark);
+      color: var(--color-on-ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* Header */
+    header {
+      height: 60px;
+      background-color: var(--color-ink);
+      border-bottom: 1px solid var(--color-hairline);
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #024ad8, #00c6ff);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 0 12px var(--color-primary-glow);
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--color-on-ink);
+    }
+
+    .brand-sub {
+      font-size: 0.78rem;
+      color: var(--color-charcoal);
+      font-weight: 400;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Main Container Grid */
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.75rem;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Card styling */
+    .card {
+      background-color: var(--color-ink);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-xl);
+      padding: 1.75rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      letter-spacing: -0.2px;
+    }
+
+    .card-subtitle {
+      font-size: 0.85rem;
+      color: var(--color-charcoal);
+      margin-top: -1rem;
+    }
+
+    /* Directional D-Pad Layout */
+    .dpad-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-xl);
+    }
+
+    .dpad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      grid-template-rows: repeat(3, 80px);
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .dpad-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--color-hairline);
+      border-radius: 12px;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      gap: 4px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.12s ease-in-out;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .dpad-btn:hover {
+      background: rgba(2, 74, 216, 0.2);
+      border-color: rgba(0, 198, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .dpad-btn:active, .dpad-btn.active {
+      background: var(--color-primary);
+      border-color: var(--color-accent);
+      transform: scale(0.95);
+      box-shadow: 0 0 16px var(--color-primary-glow);
+    }
+
+    .dpad-btn.stop-btn {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+
+    .dpad-btn.stop-btn:hover {
+      background: rgba(239, 68, 68, 0.4);
+      border-color: var(--color-danger);
+    }
+
+    .dpad-btn.stop-btn:active, .dpad-btn.stop-btn.active {
+      background: var(--color-danger);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+    }
+
+    /* Extra Turn Controls */
+    .extra-turns-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    /* Speed Control Box */
+    .speed-control-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-md);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .speed-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .speed-label {
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .speed-badge {
+      background-color: var(--color-primary);
+      color: #fff;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      min-width: 110px;
+      text-align: center;
+      box-shadow: 0 2px 8px var(--color-primary-glow);
+    }
+
+    /* Slider styling */
+    .slider-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .range-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--color-primary), 0 2px 6px rgba(0, 0, 0, 0.6);
+      transition: transform 0.15s ease, background-color 0.15s ease;
+      border: 3px solid var(--color-primary);
+    }
+
+    .range-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--color-charcoal);
+      font-weight: 500;
+    }
+
+    /* Presets Row */
+    .presets-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .btn {
+      height: 42px;
+      border-radius: var(--rounded-md);
+      border: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 14px var(--color-primary-glow);
+    }
+
+    .btn-primary:hover {
+      background-color: #023eb5;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      color: var(--color-on-ink);
+      border: 1px solid var(--color-hairline);
+    }
+
+    .btn-outline:hover {
+      background-color: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Keyboard Guide Badges */
+    .key-hint-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .key-badge {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--color-hairline);
+      border-radius: 6px;
+      padding: 6px;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--color-charcoal);
+    }
+
+    .key-badge span {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* Status Side Panel */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-badge.online {
+      background-color: rgba(34, 197, 94, 0.15);
+      color: var(--color-success);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-badge.offline {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: var(--color-danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-badge.connecting {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: var(--color-warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: currentColor;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .details-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--color-hairline);
+      font-size: 0.875rem;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      color: var(--color-charcoal);
+    }
+
+    .detail-val {
+      font-weight: 600;
+      color: var(--color-on-ink);
+    }
+
+    .icon-sm {
+      width: 18px;
+      height: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="brand-group">
+        <div class="brand-logo">
+          <i data-lucide="car" class="icon-sm"></i>
+        </div>
+        <div>
+          <span class="brand-title">ESP32 2-Wheel Car Controller</span>
+          <span class="brand-sub"> &bull; SIH2026 Robot Rover</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="/arm" class="btn btn-outline" style="height: 34px; padding: 0 12px; font-size: 0.75rem;">
+          <i data-lucide="bot" class="icon-sm"></i> ROBOTIC ARM
+        </a>
+        <a href="/live" class="btn btn-outline" style="height: 34px; padding: 0 12px; font-size: 0.75rem;">
+          <i data-lucide="video" class="icon-sm"></i> CAMERA FEED
+        </a>
+        <a href="/docs" target="_blank" class="btn btn-outline" style="height: 34px; padding: 0 12px; font-size: 0.75rem;">
+          <i data-lucide="file-code-2" class="icon-sm"></i> API DOCS
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+      <!-- Movement Controls Panel -->
+      <div class="card">
+        <div>
+          <h2 class="card-title">
+            <i data-lucide="navigation" style="color: var(--color-accent);"></i>
+            Directional Motion Controls
+          </h2>
+          <p class="card-subtitle">Use the D-Pad, click buttons, or press <strong>W A S D / Arrow Keys</strong> on your keyboard to navigate in real-time.</p>
+        </div>
+
+        <!-- D-Pad Grid -->
+        <div class="dpad-container">
+          <div class="dpad-grid">
+            <!-- Row 1 -->
+            <div></div>
+            <button class="dpad-btn" id="btnForward">
+              <i data-lucide="arrow-up" style="width: 24px; height: 24px;"></i>
+              FORWARD
+            </button>
+            <div></div>
+
+            <!-- Row 2 -->
+            <button class="dpad-btn" id="btnLeft">
+              <i data-lucide="rotate-ccw" style="width: 24px; height: 24px;"></i>
+              SPIN LEFT
+            </button>
+            <button class="dpad-btn stop-btn" id="btnStop" onclick="sendDirection('STOP')">
+              <i data-lucide="square" style="width: 22px; height: 22px;"></i>
+              STOP
+            </button>
+            <button class="dpad-btn" id="btnRight">
+              <i data-lucide="rotate-cw" style="width: 24px; height: 24px;"></i>
+              SPIN RIGHT
+            </button>
+
+            <!-- Row 3 -->
+            <div></div>
+            <button class="dpad-btn" id="btnBackward">
+              <i data-lucide="arrow-down" style="width: 24px; height: 24px;"></i>
+              REVERSE
+            </button>
+            <div></div>
+          </div>
+
+          <!-- Smooth Differential Turn Controls -->
+          <div class="extra-turns-row">
+            <button class="dpad-btn" id="btnTurnLeft" style="height: 54px; width: 100%;">
+              <i data-lucide="arrow-left" class="icon-sm"></i> TURN LEFT
+            </button>
+            <button class="dpad-btn" id="btnTurnRight" style="height: 54px; width: 100%;">
+              <i data-lucide="arrow-right" class="icon-sm"></i> TURN RIGHT
+            </button>
+          </div>
+        </div>
+
+        <!-- Speed Adjustment Slider -->
+        <div class="speed-control-box">
+          <div class="speed-header">
+            <span class="speed-label">
+              <i data-lucide="gauge" style="color: var(--color-primary);" class="icon-sm"></i>
+              Motor Speed PWM Control
+            </span>
+            <div class="speed-badge" id="speedBadge">150 PWM (59%)</div>
+          </div>
+          <div class="slider-wrapper">
+            <input type="range" min="0" max="255" value="150" class="range-slider" id="speedSlider" />
+            <div class="range-labels">
+              <span>0 (Off)</span>
+              <span>128 (50%)</span>
+              <span>255 (100% Max)</span>
+            </div>
+          </div>
+          <div class="presets-row">
+            <button class="btn btn-outline" onclick="setSpeedPreset(80)">
+              <i data-lucide="turtle" class="icon-sm"></i> Slow (30%)
+            </button>
+            <button class="btn btn-primary" onclick="setSpeedPreset(150)">
+              <i data-lucide="zap" class="icon-sm"></i> Normal (60%)
+            </button>
+            <button class="btn btn-outline" onclick="setSpeedPreset(255)">
+              <i data-lucide="flame" class="icon-sm"></i> Turbo (100%)
+            </button>
+          </div>
+        </div>
+
+        <!-- Keyboard Controls Hint -->
+        <div>
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--color-charcoal); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px;">Keyboard &amp; Press-and-Hold Controls</div>
+          <div class="key-hint-grid">
+            <div class="key-badge"><span>W / ▲</span> Forward</div>
+            <div class="key-badge"><span>S / ▼</span> Reverse</div>
+            <div class="key-badge"><span>A / ◄ / Q</span> Spin Left (&frac12; Speed)</div>
+            <div class="key-badge"><span>D / ► / E</span> Spin Right (&frac12; Speed)</div>
+            <div class="key-badge"><span>Shift + A / ◄</span> Smooth Turn Left</div>
+            <div class="key-badge"><span>Shift + D / ►</span> Smooth Turn Right</div>
+            <div class="key-badge"><span>Space</span> Emergency Stop</div>
+            <div class="key-badge"><span>Hold Key</span> Keep Moving</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Telemetry & Connection Side Panel -->
+      <div class="card" style="height: fit-content;">
+        <h2 class="card-title">
+          <i data-lucide="activity" style="color: var(--color-success);"></i>
+          Connection Status
+        </h2>
+
+        <div class="details-list">
+          <div class="detail-row">
+            <span class="detail-label">Web Controller Socket</span>
+            <span id="wsStatusBadge" class="status-badge connecting">
+              <span class="pulse-dot"></span> Connecting...
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">ESP32 Car Hardware</span>
+            <span id="deviceStatusBadge" class="status-badge offline">
+              <span class="pulse-dot"></span> Offline
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Active Controllers</span>
+            <span class="detail-val" id="activeControllersVal">0</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Current Motion</span>
+            <span class="detail-val" id="motionDetail" style="color: var(--color-accent); font-size: 1rem;">STOP</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Current Speed</span>
+            <span class="detail-val" id="speedDetail">150 PWM (59%)</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Last Transmission</span>
+            <span class="detail-val" id="lastTxVal">--:--:--</span>
+          </div>
+        </div>
+
+        <button class="btn btn-outline" onclick="initWebSocket()" style="margin-top: 0.5rem;">
+          <i data-lucide="refresh-cw" class="icon-sm"></i> RECONNECT WEBSOCKET
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    const speedSlider = document.getElementById('speedSlider');
+    const speedBadge = document.getElementById('speedBadge');
+    const speedDetail = document.getElementById('speedDetail');
+    const motionDetail = document.getElementById('motionDetail');
+
+    const wsStatusBadge = document.getElementById('wsStatusBadge');
+    const deviceStatusBadge = document.getElementById('deviceStatusBadge');
+    const activeControllersVal = document.getElementById('activeControllersVal');
+    const lastTxVal = document.getElementById('lastTxVal');
+
+    const btnMap = {
+      'FORWARD': document.getElementById('btnForward'),
+      'BACKWARD': document.getElementById('btnBackward'),
+      'LEFT': document.getElementById('btnTurnLeft'),
+      'RIGHT': document.getElementById('btnTurnRight'),
+      'SPIN_LEFT': document.getElementById('btnLeft'),
+      'SPIN_RIGHT': document.getElementById('btnRight'),
+      'STOP': document.getElementById('btnStop'),
+    };
+
+    let ws = null;
+    let currentDirection = "STOP";
+
+    function updateUI(direction, speed) {
+      currentDirection = direction;
+      motionDetail.textContent = direction;
+
+      // Calculate percentage
+      const pct = Math.round((speed / 255) * 100);
+      speedBadge.textContent = `${speed} PWM (${pct}%)`;
+      speedDetail.textContent = `${speed} PWM (${pct}%)`;
+
+      // Update button highlight active states
+      Object.keys(btnMap).forEach(key => {
+        if (btnMap[key]) {
+          if (key === direction) {
+            btnMap[key].classList.add('active');
+          } else {
+            btnMap[key].classList.remove('active');
+          }
+        }
+      });
+    }
+
+    let heartbeatTimer = null;
+    let activeHoldDirection = null;
+
+    function startHeartbeat() {
+      if (!heartbeatTimer) {
+        heartbeatTimer = setInterval(() => {
+          if (activeKeyStack.length > 0) {
+            processKeyStack();
+          } else if (activeHoldDirection) {
+            sendDirection(activeHoldDirection);
+          } else if (currentDirection !== 'STOP') {
+            sendCarCommand(currentDirection);
+          } else {
+            stopHeartbeat();
+          }
+        }, 500);
+      }
+    }
+
+    function stopHeartbeat() {
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
+    }
+
+    const directionHardwareMap = {
+      'FORWARD': 'BACKWARD',
+      'BACKWARD': 'FORWARD',
+      'LEFT': 'RIGHT',
+      'RIGHT': 'LEFT',
+      'SPIN_LEFT': 'SPIN_RIGHT',
+      'SPIN_RIGHT': 'SPIN_LEFT',
+      'STOP': 'STOP'
+    };
+
+    const reverseHardwareMap = {
+      'BACKWARD': 'FORWARD',
+      'FORWARD': 'BACKWARD',
+      'RIGHT': 'LEFT',
+      'LEFT': 'RIGHT',
+      'SPIN_RIGHT': 'SPIN_LEFT',
+      'SPIN_LEFT': 'SPIN_RIGHT',
+      'STOP': 'STOP'
+    };
+
+    function sendCarCommand(direction, speed) {
+      if (direction !== undefined) currentDirection = direction;
+      if (speed === undefined) speed = parseInt(speedSlider.value);
+
+      if (currentDirection === 'STOP') {
+        stopHeartbeat();
+      } else {
+        startHeartbeat();
+      }
+
+      // If direction is SPIN_LEFT or SPIN_RIGHT, spin at half the set speed
+      let effectiveSpeed = speed;
+      if (currentDirection === 'SPIN_LEFT' || currentDirection === 'SPIN_RIGHT') {
+        effectiveSpeed = Math.round(speed / 2);
+      }
+
+      updateUI(currentDirection, effectiveSpeed);
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const wireDirection = directionHardwareMap[currentDirection] || currentDirection;
+        const payload = JSON.stringify({
+          direction: wireDirection,
+          speed: parseInt(effectiveSpeed)
+        });
+        ws.send(payload);
+        lastTxVal.textContent = new Date().toLocaleTimeString();
+      }
+    }
+
+    function sendDirection(dir) {
+      sendCarCommand(dir, parseInt(speedSlider.value));
+    }
+
+    function setSpeedPreset(speedVal) {
+      speedSlider.value = speedVal;
+      sendCarCommand(currentDirection, speedVal);
+    }
+
+    function initWebSocket() {
+      if (ws) {
+        try { ws.close(); } catch(e) {}
+      }
+
+      wsStatusBadge.className = 'status-badge connecting';
+      wsStatusBadge.innerHTML = '<span class="pulse-dot"></span> Connecting...';
+
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${location.host}/api/v1/car/ws/controller`;
+
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        wsStatusBadge.className = 'status-badge online';
+        wsStatusBadge.innerHTML = '<span class="pulse-dot"></span> Web Connected';
+        console.log('[CAR WEBSOCKET] Connected to car controller server');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.direction !== undefined && data.speed !== undefined) {
+            const uiDir = reverseHardwareMap[data.direction] || data.direction;
+            updateUI(uiDir, data.speed);
+          }
+
+          if (data.device_connected) {
+            deviceStatusBadge.className = 'status-badge online';
+            deviceStatusBadge.innerHTML = '<span class="pulse-dot"></span> ESP32 Car Online';
+          } else {
+            deviceStatusBadge.className = 'status-badge offline';
+            deviceStatusBadge.innerHTML = '<span class="pulse-dot"></span> ESP32 Car Offline';
+          }
+
+          if (data.active_controllers !== undefined) {
+            activeControllersVal.textContent = data.active_controllers;
+          }
+        } catch(e) {
+          console.warn('[CAR WEBSOCKET] Invalid JSON:', e);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('[CAR WEBSOCKET] Error:', err);
+      };
+
+      ws.onclose = () => {
+        wsStatusBadge.className = 'status-badge offline';
+        wsStatusBadge.innerHTML = '<span class="pulse-dot"></span> Disconnected';
+        deviceStatusBadge.className = 'status-badge offline';
+        deviceStatusBadge.innerHTML = '<span class="pulse-dot"></span> Offline';
+      };
+    }
+
+    // Attach speed slider listener
+    speedSlider.addEventListener('input', () => {
+      sendCarCommand(currentDirection, parseInt(speedSlider.value));
+    });
+
+    // Keyboard controls (WASD, Arrows, Q, E, Shift + Left/Right)
+    let activeKeyStack = []; // Stores { key: 'a', shift: true/false }
+
+    function getDirectionForKey(keyObj) {
+      const k = keyObj.key;
+      const isShift = keyObj.shift;
+
+      if (k === 'w' || k === 'arrowup') return 'FORWARD';
+      if (k === 's' || k === 'arrowdown') return 'BACKWARD';
+
+      if (k === 'a' || k === 'arrowleft' || k === 'q') {
+        return isShift ? 'LEFT' : 'SPIN_LEFT';
+      }
+      if (k === 'd' || k === 'arrowright' || k === 'e') {
+        return isShift ? 'RIGHT' : 'SPIN_RIGHT';
+      }
+
+      return null;
+    }
+
+    function processKeyStack() {
+      if (activeKeyStack.length === 0) {
+        sendDirection('STOP');
+      } else {
+        const topKeyObj = activeKeyStack[activeKeyStack.length - 1];
+        const dir = getDirectionForKey(topKeyObj);
+        if (dir) {
+          sendDirection(dir);
+        }
+      }
+    }
+
+    const validMotionKeys = ['w', 'arrowup', 's', 'arrowdown', 'a', 'arrowleft', 'd', 'arrowright', 'q', 'e'];
+
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      if (key === ' ' || key === 'spacebar') {
+        e.preventDefault();
+        activeKeyStack = [];
+        activeHoldDirection = null;
+        sendDirection('STOP');
+        return;
+      }
+
+      if (validMotionKeys.includes(key)) {
+        e.preventDefault();
+        activeKeyStack = activeKeyStack.filter(item => item.key !== key);
+        activeKeyStack.push({ key: key, shift: e.shiftKey });
+        processKeyStack();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const key = e.key.toLowerCase();
+      if (validMotionKeys.includes(key)) {
+        e.preventDefault();
+        activeKeyStack = activeKeyStack.filter(item => item.key !== key);
+        processKeyStack();
+      }
+    });
+
+    // Safety: Auto-stop on window focus loss (e.g., alt-tab while key held)
+    window.addEventListener('blur', () => {
+      activeKeyStack = [];
+      activeHoldDirection = null;
+      sendDirection('STOP');
+    });
+
+    // Bind press-and-hold + release listeners to D-Pad buttons for mouse & touch
+    function bindPressAndRelease(buttonId, direction) {
+      const btn = document.getElementById(buttonId);
+      if (!btn) return;
+
+      const startAction = (e) => {
+        e.preventDefault();
+        activeHoldDirection = direction;
+        sendDirection(direction);
+      };
+
+      const stopAction = (e) => {
+        e.preventDefault();
+        activeHoldDirection = null;
+        sendDirection('STOP');
+      };
+
+      btn.addEventListener('mousedown', startAction);
+      btn.addEventListener('mouseup', stopAction);
+      btn.addEventListener('mouseleave', stopAction);
+      btn.addEventListener('touchstart', startAction, { passive: false });
+      btn.addEventListener('touchend', stopAction);
+      btn.addEventListener('touchcancel', stopAction);
+    }
+
+    bindPressAndRelease('btnForward', 'FORWARD');
+    bindPressAndRelease('btnBackward', 'BACKWARD');
+    bindPressAndRelease('btnLeft', 'SPIN_LEFT');
+    bindPressAndRelease('btnRight', 'SPIN_RIGHT');
+    bindPressAndRelease('btnTurnLeft', 'LEFT');
+    bindPressAndRelease('btnTurnRight', 'RIGHT');
+
+    // Initialize WebSocket connection on load
+    initWebSocket();
+  </script>
+</body>
+</html>
